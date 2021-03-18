@@ -1,34 +1,9 @@
 #!/bin/bash
-# 
-# Simple wrapper for the pgli tool. This script allows us to pull in linked
-# docker containers if the user decides to bring up the cli that way.
 
-db_url=$1
+echo $POSTGRES_CLIENT_CERT | base64 --decode > client-cert.pem
+echo $POSTGRES_CLIENT_KEY | base64 --decode > client-key.pem
+echo $POSTGRES_SERVER_CA | base64 --decode > ca-cert.pem
 
-usage() {
-    echo "3 ways to use this container:"
-    echo ""
-    echo "1. Directly pass the database url:"
-    echo "   docker run -it --rm dencold/pgcli postgres://DBUSER:DBPASS@DBHOST:DBPORT"
-    echo "2. Pass an environment variable via docker's '-e' argument"
-    echo "   docker run -it --rm -e DB_URL=postgres://DBUSER:DBPASS@DBHOST:DBPORT dencold/pgcli"
-    echo "3. Automatically connect via a linked postgres container (my favorite):"
-    echo "   docker run -it --rm --link YOURCONTAINER:postgres dencold/pgcli"
-}
+chmod 0600 client-key.pem
 
-if [ -n "$db_url" ]; then
-    # 1st priority goes to any argument passed to the script
-    pgcli "$db_url"
-elif [ -n "$DB_URL" ]; then
-    # next, if a DB_URL environment variable is set, use that
-    pgcli "$DB_URL"
-elif [ -n "$POSTGRES_PORT_5432_TCP_ADDR" ]; then
-    # if nothing is set, we try to construct a db_url from the env vars that docker
-    # automatically sets for the postgres container
-    pgcli postgres://$POSTGRES_ENV_POSTGRES_USER:$POSTGRES_ENV_POSTGRES_PASSWORD@$POSTGRES_PORT_5432_TCP_ADDR:$POSTGRES_PORT_5432_TCP_PORT
-else
-    echo "Database URL not provided, please try again."
-    echo ""
-    usage
-fi
-
+pgcli "host=$POSTGRES_HOST sslmode=prefer sslrootcert=ca-cert.pem sslcert=client-cert.pem sslkey=client-key.pem user=$POSTGRES_USER dbname=$POSTGRES_DATABASE password=$POSTGRES_PASSWORD"
