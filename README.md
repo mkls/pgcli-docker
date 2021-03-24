@@ -1,13 +1,13 @@
 #Usage
 
 ```
-kubectl run --image morzzz007/pgcli \
+kubectl run --image mkls/pgcli \
 --overrides='{
   "spec": {
     "containers": [
       {
         "name": "oneoff",
-        "image": "morzzz007/pgcli",
+        "image": "mkls/pgcli",
         "command": [ "/bin/bash", "-c", "--" ],
         "args": [ "while true; do sleep 30; done;" ],
         "envFrom": [{
